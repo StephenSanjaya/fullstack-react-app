@@ -1,0 +1,56 @@
+version: "3.8"
+services: 
+    client:
+        container_name: react-client
+        build: 
+          context: ./client/
+          dockerfile: Dockerfile.Dev
+        volumes:
+          - ./client/src:/app/src
+        env_file:
+          - ./frontend.env
+        stdin_open: true 
+        tty: true
+    nginx:
+        container_name: react-proxy
+        build:
+          context: ./nginx/
+          dockerfile: Dockerfile.Dev
+        depends_on:
+          - client
+          - api
+          - api1
+        restart: always
+        ports:
+          - '3050:80'
+    api:
+        container_name: express-server
+        build: 
+          context: ./server/
+          dockerfile: Dockerfile.Dev
+        depends_on:
+          - db
+        env_file:
+          - ./backend_api.env
+        restart: always
+    api1:
+        container_name: express-server1
+        build: 
+          context: ./server/
+          dockerfile: Dockerfile.Dev
+        depends_on:
+          - db
+        env_file:
+          - ./backend_api1.env
+        restart: always    
+    db:
+        container_name: postgres-db
+        image: postgres:alpine
+        env_file:
+          - ./db.env
+        ports:
+          - "5433:5432"
+        volumes:
+          - ./server/postgresdata:/var/lib/postgresql/data
+          - ./server/database.sql:/docker-entrypoint-initdb.d/dbinit.sql
+        restart: always
